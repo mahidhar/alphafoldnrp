@@ -10,4 +10,5 @@ TBD - initial implementation, we mounted the PVC in a pod and ran the download s
 <br>
 kubectl apply -f alphafold_gpu_monomer.yaml
 <br>
+<br>
 In this example we copy over the bfd index files to the node local scratch as this needs to be fast access. Rest of the files remain in the PVC. After that we use the run_alphafold.sh script that is part of the docker container to run the alphafold example. The input was already staged in the PVC as well (eventually we could dynamically download this in the run itself).
