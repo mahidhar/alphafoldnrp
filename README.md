@@ -1,7 +1,9 @@
 # Project to setup and run AlphaFold on Nautilus cluster
 ## Create PVC
 The first step is to create the PVC where we will store the data. This only needs to be done once in every namespace.
+<br>
 kubectl apply -f pvc-alphafold-data.yaml
+<br>
 ## Download data to PVC
 TBD - initial implementation, we mounted the PVC in a pod and ran the download steps manually. This is to download all the reference data into the PVC
 ## Run AlphaFold example
