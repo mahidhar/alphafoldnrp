@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-test-ior
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/region
+            operator: In
+            values:
+            - us-west
+            - us-east
+          - key: nvidia.com/gpu.product
+            operator: In
+            values:
+            - NVIDIA-A10
+            - NVIDIA-A40
+            - NVIDIA-GeForce-RTX-3090
+            - NVIDIA-RTX-A6000
+            - NVIDIA-RTX-A5000
+  containers:
+  - name: test
+    image: unlhcc/alphafold:2.3.2
+    command: ["/bin/bash", "-c"]
+    args:
+        - >-
+            echo "Starting data transfer to local disk";
+            date;
+            cd /data;
+            mkdir bfd;
+            cp /alphadata/bfd/*index bfd/;
+            cp /alphadata/bfd/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt_cs219.ffdata bfd/;
+            cp /alphadata/bfd/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt_hhm.ffdata bfd/;
+            cd bfd ;
+            ln -s /alphadata/bfd/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt_a3m.ffdata;
+            cd ../ ;
+            tar -xf /alphadata/pdb_mmcif.tar;
+            echo "Ended data transfer";
+            date; 
+            cp /alphadata/examples/PBCV.input.fasta .;
+            /app/run_alphafold.sh --fasta_paths=PBCV.input.fasta --output_dir=output_directory  --model_preset=monomer  --max_template_date=1950-01-01  --data_dir=/alphadata  --use_gpu_relax  --db_preset=full_dbs  --uniref90_database_path=/alphadata/uniref90/uniref90.fasta  --mgnify_database_path=/alphadata/mgnify/mgy_clusters_2022_05.fa  --bfd_database_path=/data/bfd/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt  --template_mmcif_dir=/data/pdb_mmcif/mmcif_files  --obsolete_pdbs_path=/data/pdb_mmcif/obsolete.dat  --uniref30_database_path=/alphadata/uniref30/UniRef30_2021_03  --pdb70_database_path=/alphadata/pdb70/pdb70;
+            tar -cvf /alphadata/examples/output.tar output_directory;
+    resources:
+      limits:
+        memory: 50Gi
+        nvidia.com/gpu: "1"
+        cpu: "8"
+        ephemeral-storage: 800Gi
+      requests:
+        memory: 50Gi
+        nvidia.com/gpu: "1"
+        cpu: "8"
+        ephemeral-storage: 800Gi
+    volumeMounts:
+        - mountPath: /alphadata
+          name: alphadata
+        - mountPath: /data
+          name: scratch
+  restartPolicy: Never
+  volumes:
+     - name: alphadata
+       persistentVolumeClaim:
+         claimName: alphadata
+     - name: scratch
+       emptyDir: {}
